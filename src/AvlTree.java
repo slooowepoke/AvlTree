@@ -1,53 +1,45 @@
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
 
     private class AvlIterator implements Iterator<K> {
 
-        private Node<K> curr, next, max;
+        Stack<Node<K>> stack;
 
         AvlIterator() {
-            next = findMin(root);
-            max = findMax(root);
+            stack = new Stack<>();
+            while (root != null) {
+                stack.push(root);
+                root = root.left;
+            }
         }
 
-        @Override
         public boolean hasNext() {
-            return (next != null);
+            return !stack.isEmpty();
         }
 
-        @Override
         public K next() {
-            if (!hasNext()) {
+            if (stack.size() == 0) {
                 throw new NoSuchElementException();
             }
-            if (next == max) {
-                next = null;
-                return max.key;
-            }
-            Node<K> node = next;
-            curr = max;
-            next(root);
-            next = curr;
-            return node.key;
-        }
 
-        private void next(Node<K> node) {
-            if (node != null) {
-                next(node.left);
-                if (node.key.compareTo(next.key) > 0
-                        && node.key.compareTo(curr.key) < 0) {
-                    curr = node;
+            Node<K> node = stack.pop();
+            K result = node.key;
+
+            if (node.right != null) {
+                node = node.right;
+                while (node != null) {
+                    stack.push(node);
+                    node = node.left;
                 }
-                next(node.right);
             }
+
+            return result;
         }
     }
 
     private static class Node<K> {
-        private K key;
+        private final K key;
         private int height;
         private Node<K> left, right;
 
@@ -59,13 +51,14 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
     }
 
     private Node<K> root;
-    private int Size;
+    private int size;
 
     public AvlTree() {
-        super();
         root = null;
-        Size = 0;
+        size = 0;
     }
+
+    /* PUBLIC METHODS */
 
     @Override
     public Iterator<K> iterator() {
@@ -77,11 +70,11 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
         if (o == null || !(o instanceof AvlTree)) {
             return false;
         }
-        AvlTree new_tree = (AvlTree) o;
-        if (new_tree.size() != size()) {
+        AvlTree newTree = (AvlTree) o;
+        if (newTree.size() != size()) {
             return false;
         }
-        Iterator iter = new_tree.iterator();
+        Iterator iter = newTree.iterator();
         while (iter.hasNext()) {
             if (!contains(iter.next())) {
                 return false;
@@ -92,7 +85,7 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
 
     @Override
     public boolean isEmpty() {
-        return Size == 0;
+        return size == 0;
     }
 
     @Override
@@ -100,7 +93,7 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
         if (o == null) {
             return false;
         }
-        K key = (K)o;
+        K key = (K) o;
         Node<K> node = root;
         while (node != null) {
             if (key.compareTo(node.key) < 0) {
@@ -114,7 +107,7 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
 
     @Override
     public Object[] toArray() {
-        Object[] array = new Object[Size];
+        Object[] array = new Object[size];
         Iterator<K> iter = this.iterator();
         int idx = 0;
         while (iter.hasNext()) {
@@ -131,7 +124,7 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
             return false;
         }
         root = add(root, k);
-        Size++;
+        size++;
         return true;
     }
 
@@ -140,15 +133,15 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
         if (o == null || !contains(o)) {
             return false;
         }
-        root = erase(root, (K)o);
-        Size--;
+        root = erase(root, (K) o);
+        size--;
         return true;
     }
 
     @Override
     public void clear() {
         root = null;
-        Size = 0;
+        size = 0;
     }
 
     @Override
@@ -160,8 +153,46 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
 
     @Override
     public int size() {
-        return Size;
+        return size;
     }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(toArray());
+    }
+
+    /* PACKAGE PRIVATE METHODS */
+
+    boolean checkSize() {
+        return size(root) == size;
+    }
+
+    boolean checkBalance() {
+        return checkBalance(root);
+    }
+
+    K getRootValue() {
+        if (root == null) {
+            throw new NoSuchElementException();
+        }
+        return root.key;
+    }
+
+    K getMinValue() {
+        if (root == null) {
+            throw new NoSuchElementException();
+        }
+        return findMin(root).key;
+    }
+
+    K getMaxValue() {
+        if (root == null) {
+            throw new NoSuchElementException();
+        }
+        return findMax(root).key;
+    }
+
+    /* PRIVATE METHODS */
 
     private int height(Node<K> node) {
         return (node == null ? 0 : node.height);
@@ -172,6 +203,13 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
         int hl = height(node.left);
         node.height = (hr > hl ? hr : hl) + 1;
     }
+
+    /*
+    *  getBalance() возвращает локальный баланс для каждого узла.
+    *  Контроль баланса с исключением - в методе balance() - проходит.
+    *  Высота каждого узла назначается при инициализации (единицей)
+    *  Поэтому разность никогда не будет больше 2х по модулю
+    */
 
     private int getBalance(Node<K> node) {
         return (height(node.right) - height(node.left));
@@ -197,13 +235,19 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
 
     private Node<K> balance(Node<K> node) {
         fixHeight(node);
-        if (getBalance(node) == 2) {
+
+        int balance = getBalance(node);
+        if (Math.abs(balance) > 2) {
+            throw new AssertionError("Incorrect balance: " + balance);
+        }
+
+        if (balance == 2) {
             if (getBalance(node.right) < 0) {
                 node.right = rotateRight(node.right);
             }
             return rotateLeft(node);
         }
-        if (getBalance(node) == -2) {
+        if (balance == -2) {
             if (getBalance(node.left) > 0) {
                 node.left = rotateLeft(node.left);
             }
@@ -267,5 +311,16 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
             str.append(node.key).append(" ");
             toString(node.right, str);
         }
+    }
+
+    private int size(Node<K> node) {
+        return (node == null ? 0
+                : size(node.left) + 1 + size(node.right));
+    }
+
+    private boolean checkBalance(Node<K> node) {
+        return (node == null || (checkBalance(node.left) &&
+                Math.abs(getBalance(node)) <= 1
+                && checkBalance(node.right)));
     }
 }

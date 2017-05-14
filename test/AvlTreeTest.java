@@ -20,6 +20,8 @@ public class AvlTreeTest {
             avlTree.add(50 - rnd.nextInt(100));
         }
 
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+
         boolean success = true;
 
         Iterator<Integer> iter = avlTree.iterator();
@@ -27,51 +29,51 @@ public class AvlTreeTest {
         if (!iter.hasNext()) {
             success = false;
         } else {
-            int element_was = iter.next();
+            int elementWas = iter.next();
             while (iter.hasNext()) {
-                int element_is = iter.next();
-                if (element_is <= element_was) {
+                int elementIs = iter.next();
+                if (elementIs <= elementWas) {
                     success = false;
                 }
-                element_was = element_is;
+                elementWas = elementIs;
             }
         }
 
-        Assert.assertFalse("Test for 'iterator()' failed", !success);
+        Assert.assertTrue("Test for 'iterator()' failed", success);
     }
 
     @Test
     public void equals() throws Exception {
-        AvlTree<Integer> avlTree_1 = new AvlTree<>();
-        AvlTree<Integer> avlTree_2 = new AvlTree<>();
+        AvlTree<Integer> avlTree1 = new AvlTree<>();
+        AvlTree<Integer> avlTree2 = new AvlTree<>();
         final int size = 20;
 
         Random rnd = new Random();
         for ( int i = 0 ; i < size; ++i) {
             Integer curr = 50 - rnd.nextInt(100);
-            avlTree_1.add(curr);
-            avlTree_2.add(curr);
+            avlTree1.add(curr);
+            avlTree2.add(curr);
         }
 
-        Assert.assertFalse("Test for 'equals() failed: not equal'",
-                !avlTree_1.equals(avlTree_2));
+        Assert.assertTrue("Test for 'equals() failed: not equal'",
+                avlTree1.equals(avlTree2));
 
-        avlTree_1.remove(avlTree_1.iterator().next());
+        avlTree1.remove(avlTree1.iterator().next());
 
         Assert.assertFalse("Test for 'equals() failed: equal'",
-                avlTree_1.equals(avlTree_2));
+                avlTree1.equals(avlTree2));
     }
 
     @Test
     public void isEmpty() throws Exception {
         AvlTree<Integer> avlTree = new AvlTree<>();
-        Assert.assertFalse("Test for 'isEmpty()' failed: not empty", !avlTree.isEmpty());
+        Assert.assertTrue("Test for 'isEmpty()' failed: not empty", avlTree.isEmpty());
 
         avlTree.add(5);
         Assert.assertFalse("Test for 'isEmpty()' failed: empty", avlTree.isEmpty());
 
         avlTree.remove(5);
-        Assert.assertFalse("Test for 'isEmpty()' failed: not empty after remove", !avlTree.isEmpty());
+        Assert.assertTrue("Test for 'isEmpty()' failed: not empty after remove", avlTree.isEmpty());
     }
 
     @Test
@@ -79,41 +81,70 @@ public class AvlTreeTest {
         AvlTree<Integer> avlTree = new AvlTree<>();
         final int size = 20;
 
-        Vector<Integer> array_in = new Vector<>();
+        Vector<Integer> arrayIn = new Vector<>();
 
         Random rnd = new Random();
         for ( int i = 0 ; i < size; ++i) {
             Integer curr = 50 - rnd.nextInt(100);
             if (avlTree.add(curr)) {
-                array_in.add(curr);
+                arrayIn.add(curr);
             }
         }
 
-        array_in.sort(null);
+        arrayIn.sort(null);
 
-        Object[] array_out = avlTree.toArray();
-        Assert.assertFalse("Test for 'toArray()' failed",
-                !Arrays.equals(array_in.toArray(), array_out));
+        Object[] arrayOut = avlTree.toArray();
+        Assert.assertTrue("Test for 'toArray()' failed",
+                Arrays.equals(arrayIn.toArray(), arrayOut));
     }
 
     @Test
-    public void add_contains() throws Exception {
+    public void addContains() throws Exception {
         AvlTree<Integer> avlTree = new AvlTree<>();
         avlTree.add(5);
 
-        Assert.assertFalse("Test for 'add_contains()' failed", !avlTree.contains(5));
-        Assert.assertTrue("Test for 'add_contains()' failed", !avlTree.contains(7));
-        Assert.assertTrue("Test for 'add_contains()' failed", !avlTree.add(5));
+        Assert.assertTrue("Test for 'addContains()' failed", avlTree.contains(5));
+        Assert.assertFalse("Test for 'addContains()' failed", avlTree.contains(7));
+        Assert.assertFalse("Test for 'addContains()' failed", avlTree.add(5));
     }
 
     @Test
     public void remove() throws Exception {
         AvlTree<Integer> avlTree = new AvlTree<>();
-        avlTree.add(5);
+
+        final int size = 20;
+
+        Random rnd = new Random();
+        for ( int i = 0 ; i < size; ++i) {
+            Integer curr = 50 - rnd.nextInt(100);
+            avlTree.add(curr);
+        }
+
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+
+        Assert.assertTrue("Test for 'remove()' failed: not removed",
+                avlTree.remove(avlTree.getMinValue()));
+
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+
+        Assert.assertTrue("Test for 'remove()' failed: not removed",
+                avlTree.remove(avlTree.getMaxValue()));
+
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+
+        int rootValue = avlTree.getRootValue();
+
+        Assert.assertTrue("Test for 'remove()' failed: not removed",
+                avlTree.remove(rootValue));
+
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+
         Assert.assertFalse("Test for 'remove()' failed: removed non-existing",
-                avlTree.remove(7));
-        Assert.assertFalse("Test for 'remove()' failed: not removed",
-                !avlTree.remove(5));
+                avlTree.remove(rootValue));
     }
 
     @Test
@@ -122,19 +153,51 @@ public class AvlTreeTest {
         avlTree.add(5);
         avlTree.clear();
 
-        assertFalse("Test for 'clear()' failed", !avlTree.isEmpty());
+        Assert.assertTrue("Tree is not balanced", avlTree.checkBalance());
+
+        assertTrue("Test for 'clear()' failed", avlTree.isEmpty());
     }
 
     @Test
     public void size() throws Exception {
         AvlTree<Integer> avlTree = new AvlTree<>();
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
         Assert.assertFalse("Test for 'size()' failed: not 0", avlTree.size() != 0);
 
         avlTree.add(5);
-        Assert.assertFalse("Test for 'size()' failed: not 1", avlTree.size() != 1);
+        avlTree.add(2);
+        avlTree.add(10);
+
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+        Assert.assertFalse("Test for 'size()' failed: not 1", avlTree.size() != 3);
 
         avlTree.remove(5);
-        Assert.assertFalse("Test for 'size()' failed: not 0 after remove", avlTree.size() != 0);
+        Assert.assertTrue("Size check failed", avlTree.checkSize());
+        Assert.assertFalse("Test for 'size()' failed: not 0 after remove", avlTree.size() != 2);
+    }
+
+    @Test
+    public void checkHashCode() throws Exception {
+        AvlTree<Integer> avlTree1 = new AvlTree<>();
+        AvlTree<Integer> avlTree2 = new AvlTree<>();
+        final int size = 20;
+
+        Random rnd = new Random();
+        for ( int i = 0 ; i < size; ++i) {
+            Integer curr = 50 - rnd.nextInt(100);
+            avlTree1.add(curr);
+            avlTree2.add(curr);
+        }
+
+        Assert.assertTrue(
+                "Test for 'hashCode()' failed: codes for equal trees are not equal",
+                avlTree1.hashCode() == avlTree2.hashCode());
+
+        avlTree1.remove(avlTree1.iterator().next());
+
+        Assert.assertFalse(
+                "Test for 'hashCode()' failed: codes for different trees are equal",
+                avlTree1.hashCode() == avlTree2.hashCode());
     }
 
 }
