@@ -7,10 +7,11 @@ public class AvlTree<K extends Comparable<K>> extends AbstractSet<K> {
         Stack<Node<K>> stack;
 
         AvlIterator() {
+            Node<K> curr = root;
             stack = new Stack<>();
-            while (root != null) {
-                stack.push(root);
-                root = root.left;
+            while (curr != null) {
+                stack.push(curr);
+                curr = curr.left;
             }
         }
 
